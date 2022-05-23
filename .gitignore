@@ -13,3 +13,10 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
