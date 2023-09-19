@@ -53,7 +53,7 @@ void SoftRenderer::LoadScene2D()
 }
 
 // 게임 로직과 렌더링 로직이 공유하는 변수
-
+Vector2 currentPosition(100.f, 100.f);
 
 // 게임 로직을 담당하는 함수
 void SoftRenderer::Update2D(float InDeltaSeconds)
@@ -63,7 +63,13 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 	const InputManager& input = g.GetInputManager();
 
 	// 게임 로직의 로컬 변수
+	static float moveSpeed = 100.f;
 
+	Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis));
+	Vector2 deltaPosition = inputVector * moveSpeed * InDeltaSeconds;
+
+	// 물체의 최종 상태 설정
+	currentPosition += deltaPosition;
 }
 
 // 렌더링 로직을 담당하는 함수
@@ -78,6 +84,14 @@ void SoftRenderer::Render2D()
 
 	// 렌더링 로직의 로컬 변수
 
+	// 회색 선 벡터 
+	static float lineLength = 500.f;
+	Vector2 lineStart = currentPosition * lineLength;
+	Vector2 lineEnd = currentPosition * -lineLength;
+	r.DrawLine(lineStart, lineEnd, LinearColor::LightGray);
+
+	// 벡터의 현재 좌표를 우상단에 출력
+	r.PushStatisticText("Coodinate : " + currentPosition.ToString());
 }
 
 // 메시를 그리는 함수
