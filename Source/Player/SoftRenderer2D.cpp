@@ -83,12 +83,33 @@ void SoftRenderer::Render2D()
 	DrawGizmo2D();
 
 	// 렌더링 로직의 로컬 변수
+	static float radius = 50.f;
+	static std::vector<Vector2> circles;
 
-	// 회색 선 벡터 
-	static float lineLength = 500.f;
-	Vector2 lineStart = currentPosition * lineLength;
-	Vector2 lineEnd = currentPosition * -lineLength;
-	r.DrawLine(lineStart, lineEnd, LinearColor::LightGray);
+	//최초 한번만 담기
+	if (circles.empty())
+	{
+		//각변이 radius의 두배인 사각형안에서 찾는다.
+		for (float x = -radius; x <= radius; ++x)
+		{
+			for (float y = -radius; y <= radius; ++y)
+			{
+				//현재 찾고있는 임시 좌표의 길이 저장
+				float tempLength = Vector2(x, y).SizeSquared();
+
+				if (tempLength <= radius * radius)
+				{
+					circles.push_back(Vector2(x, y));
+				}
+			}
+		}
+	}
+
+	//담겨진 좌표 점으로 찍어서 원처럼 보이게 하기
+	for (auto const& v : circles)
+	{
+		r.DrawPoint(v + currentPosition, LinearColor::Red);
+	}
 
 	// 벡터의 현재 좌표를 우상단에 출력
 	r.PushStatisticText("Coodinate : " + currentPosition.ToString());
