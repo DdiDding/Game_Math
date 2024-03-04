@@ -54,6 +54,7 @@ void SoftRenderer::LoadScene2D()
 
 // 게임 로직과 렌더링 로직이 공유하는 변수
 Vector2 currentPosition(100.f, 100.f);
+float currentScale = 10.f;
 
 // 게임 로직을 담당하는 함수
 void SoftRenderer::Update2D(float InDeltaSeconds)
@@ -64,11 +65,17 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 
 	// 게임 로직의 로컬 변수
 	static float moveSpeed = 100.f;
+	static float scaleMin = 5.f;
+	static float scaleMax = 20.f;
+	static float scaleSpeed = 20.f;
+
 
 	Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis)).GetNormalize();
 	Vector2 deltaPosition = inputVector * moveSpeed * InDeltaSeconds;
+	float deltaScale = input.GetAxis(InputAxis::ZAxis) * scaleSpeed * InDeltaSeconds;
 
 	currentPosition += deltaPosition;
+	currentScale = Math::Clamp(currentScale + deltaScale, scaleMin, scaleMax);
 }
 
 // 렌더링 로직을 담당하는 함수
@@ -82,33 +89,29 @@ void SoftRenderer::Render2D()
 	DrawGizmo2D();
 
 	// 렌더링 로직의 로컬 변수
-	int size = currentPosition.Size();
+	float rad = 0.f;
+	static float inc = 0.001f;
+	static std::vector<Vector2> hearts;
 
-	for (int i = -size; i < size; ++i)
+	if (hearts.empty() == true)
 	{
-		for (int j = -size; j < size; ++j)
+		for (rad = 0.f; rad < Math::TwoPI; rad += inc)
 		{
-			if (Vector2(i, j).Size() <= currentPosition.Size())
-			{
-				r.DrawPoint(Vector2(i, j), LinearColor::Blue);
-			}
+			float sin = sinf(rad);
+			float cos = cosf(rad);
+			float cos2 = cosf(2 * rad);
+			float cos3 = cosf(3 * rad);
+			float cos4 = cosf(4 * rad);
+			float x = 16.f * sin * sin * sin;
+			float y = 13 * cos - 5 * cos2 - 2 * cos3 - cos4;
+			hearts.push_back(Vector2(x, y));
 		}
 	}
-	
-	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y -1.f), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y+1.f), LinearColor::Red);
 
-	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y - 1.f), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y + 1.f), LinearColor::Red);
-
-	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y - 1.f), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y), LinearColor::Red);
-	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y + 1.f), LinearColor::Red);
-
-	r.DrawLine(Vector2::Zero, currentPosition, LinearColor::Green);
-
+	for (auto const& v : hearts)
+	{
+		r.DrawPoint(v * currentScale + currentPosition, LinearColor::Blue);
+	}
 
 	r.PushStatisticText("Coodinate : " + currentPosition.ToString());
 	r.PushStatisticText("currnetLength : " + std::to_string(currentPosition.Size()));
