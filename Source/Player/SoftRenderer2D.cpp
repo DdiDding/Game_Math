@@ -54,7 +54,11 @@ void SoftRenderer::LoadScene2D()
 
 // 게임 로직과 렌더링 로직이 공유하는 변수
 Vector2 currentPosition(100.f, 100.f);
-float currentScale = 10.f;
+float currentScale[2] = { 10.f, 10.f };
+static float elapsedTime[2] = { 0.f, 0.f };
+static float scaleSpeed = 0.5f;
+static float alpha; 
+static float scaleRad;
 
 // 게임 로직을 담당하는 함수
 void SoftRenderer::Update2D(float InDeltaSeconds)
@@ -65,17 +69,32 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 
 	// 게임 로직의 로컬 변수
 	static float moveSpeed = 100.f;
-	static float scaleMin = 5.f;
+	static float scaleMin = 0.f;
 	static float scaleMax = 20.f;
-	static float scaleSpeed = 20.f;
 
+	// Calculate position
+	{
+		Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis)).GetNormalize();
+		Vector2 deltaPosition = inputVector * moveSpeed * InDeltaSeconds;
+		currentPosition += deltaPosition;
 
-	Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis)).GetNormalize();
-	Vector2 deltaPosition = inputVector * moveSpeed * InDeltaSeconds;
-	float deltaScale = input.GetAxis(InputAxis::ZAxis) * scaleSpeed * InDeltaSeconds;
+		scaleSpeed += input.GetAxis(InputAxis::ZAxis) * InDeltaSeconds;
+	}
 
-	currentPosition += deltaPosition;
-	currentScale = Math::Clamp(currentScale + deltaScale, scaleMin, scaleMax);
+	// Calculate scale
+	{
+		static float duration = 0.5f;
+		// elapsedTime은 0 ~ 1
+		elapsedTime[0] += InDeltaSeconds * scaleSpeed;
+		elapsedTime[0] = Math::FMod(elapsedTime[0], duration);
+		elapsedTime[0] = Math::FMod(elapsedTime[0], duration);
+
+		//radian 0 ~ 2pi(6.28f) 까지의 값 출력
+		scaleRad = elapsedTime[0] * Math::TwoPI;
+		//안 뒤집어 지게 하기 위해 sin그래프를 위로 올림, 그러면 너무 커져서 반 줄임
+		alpha = sinf(scaleRad);
+		currentScale[0] = Math::Lerp(scaleMin, scaleMax, alpha);
+	}
 }
 
 // 렌더링 로직을 담당하는 함수
@@ -110,11 +129,17 @@ void SoftRenderer::Render2D()
 
 	for (auto const& v : hearts)
 	{
-		r.DrawPoint(v * currentScale + currentPosition, LinearColor::Blue);
+		r.DrawPoint(v * currentScale[0] + currentPosition, LinearColor::Blue);
+		//r.DrawPoint(v * currentScale[1] + currentPosition, LinearColor::Red);
 	}
 
 	r.PushStatisticText("Coodinate : " + currentPosition.ToString());
 	r.PushStatisticText("currnetLength : " + std::to_string(currentPosition.Size()));
+	r.PushStatisticText("elapsedTime : " + std::to_string(elapsedTime[0]));
+	r.PushStatisticText("ScaleSpeed: " + std::to_string(scaleSpeed));
+	r.PushStatisticText("alpha: " + std::to_string(alpha));
+	r.PushStatisticText("scaleRad: " + std::to_string(scaleRad));
+	r.PushStatisticText("currentScale: " + std::to_string(currentScale[0]));
 }
 
 // 메시를 그리는 함수
