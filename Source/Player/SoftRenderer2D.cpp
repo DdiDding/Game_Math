@@ -65,10 +65,9 @@ void SoftRenderer::Update2D(float InDeltaSeconds)
 	// 게임 로직의 로컬 변수
 	static float moveSpeed = 100.f;
 
-	Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis));
+	Vector2 inputVector = Vector2(input.GetAxis(InputAxis::XAxis), input.GetAxis(InputAxis::YAxis)).GetNormalize();
 	Vector2 deltaPosition = inputVector * moveSpeed * InDeltaSeconds;
 
-	// 물체의 최종 상태 설정
 	currentPosition += deltaPosition;
 }
 
@@ -83,36 +82,36 @@ void SoftRenderer::Render2D()
 	DrawGizmo2D();
 
 	// 렌더링 로직의 로컬 변수
-	static float radius = 50.f;
-	static std::vector<Vector2> circles;
+	int size = currentPosition.Size();
 
-	//최초 한번만 담기
-	if (circles.empty())
+	for (int i = -size; i < size; ++i)
 	{
-		//각변이 radius의 두배인 사각형안에서 찾는다.
-		for (float x = -radius; x <= radius; ++x)
+		for (int j = -size; j < size; ++j)
 		{
-			for (float y = -radius; y <= radius; ++y)
+			if (Vector2(i, j).Size() <= currentPosition.Size())
 			{
-				//현재 찾고있는 임시 좌표의 길이 저장
-				float tempLength = Vector2(x, y).SizeSquared();
-
-				if (tempLength <= radius * radius)
-				{
-					circles.push_back(Vector2(x, y));
-				}
+				r.DrawPoint(Vector2(i, j), LinearColor::Blue);
 			}
 		}
 	}
+	
+	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y -1.f), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X -1.f, currentPosition.Y+1.f), LinearColor::Red);
 
-	//담겨진 좌표 점으로 찍어서 원처럼 보이게 하기
-	for (auto const& v : circles)
-	{
-		r.DrawPoint(v + currentPosition, LinearColor::Red);
-	}
+	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y - 1.f), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X, currentPosition.Y + 1.f), LinearColor::Red);
 
-	// 벡터의 현재 좌표를 우상단에 출력
+	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y - 1.f), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y), LinearColor::Red);
+	r.DrawPoint(Vector2(currentPosition.X +1.f, currentPosition.Y + 1.f), LinearColor::Red);
+
+	r.DrawLine(Vector2::Zero, currentPosition, LinearColor::Green);
+
+
 	r.PushStatisticText("Coodinate : " + currentPosition.ToString());
+	r.PushStatisticText("currnetLength : " + std::to_string(currentPosition.Size()));
 }
 
 // 메시를 그리는 함수
